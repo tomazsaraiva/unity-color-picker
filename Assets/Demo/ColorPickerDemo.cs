@@ -8,13 +8,14 @@ namespace TS.ColorPicker.Demo
     {
         #region Variables
 
+        private const string PREF_COLOR = "color";
+
         [Header("References")]
         [SerializeField] private MeshRenderer _renderer;
         [SerializeField] private ColorPicker _colorPicker;
 
         private Color _color;
         private Ray _ray;
-        private RaycastHit _hit;
 
         #endregion
 
@@ -24,14 +25,22 @@ namespace TS.ColorPicker.Demo
             _colorPicker.OnSubmit.AddListener(ColorPicker_OnSubmit);
             _colorPicker.OnCancel.AddListener(ColorPicker_OnCancel);
 
-            _color = _renderer.material.color;
+            var savedColor = PlayerPrefs.GetString(PREF_COLOR, "");
+            if(ColorUtility.TryParseHtmlString("#" + savedColor, out _color))
+            {
+                _renderer.material.color = _color;
+            }
+            else
+            {
+                _color = _renderer.material.color;
+            }
         }
         private void Update()
         {
             if(Input.GetMouseButtonUp(0))
             {
                 _ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                if (Physics.Raycast(_ray, out _hit, 100))
+                if (Physics.Raycast(_ray))
                 {
                     _colorPicker.Open(_color);
                 }
@@ -45,6 +54,10 @@ namespace TS.ColorPicker.Demo
         private void ColorPicker_OnSubmit(Color color)
         {
             _color = color;
+
+            PlayerPrefs.SetString(PREF_COLOR, ColorUtility.ToHtmlStringRGBA(_color));
+            PlayerPrefs.Save();
+
         }
         private void ColorPicker_OnCancel()
         {
